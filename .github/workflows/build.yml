@@ -1,0 +1,32 @@
+name: Build Dylib
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Theos & Dobby
+        run: |
+          git clone --recursive https://github.com ~/theos
+          mkdir -p include lib
+          curl -L https://github.com -o dobby.tar.gz || true
+          git clone https://github.com /tmp/dobby
+          cmake -S /tmp/dobby -B /tmp/dobby/build -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DDOBBY_GENERATE_SHARED=OFF
+          cmake --build /tmp/dobby/build --config Release
+          cp /tmp/dobby/include/dobby.h include/
+          cp /tmp/dobby/build/libdobby.a lib/
+
+      - name: Build Tweak
+        env:
+          THEOS: /Users/runner/theos
+        run: |
+          make
+
+      - name: Upload Dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: SDSTweak.dylib
+          path: .theos/obj/debug/arm64/SDSTweak.dylib
