@@ -11,8 +11,10 @@ jobs:
       - name: Install Theos & Dobby
         run: |
           git clone --recursive https://github.com ~/theos
+          mkdir -p ~/theos/sdks
+          curl -L https://github.com -o sdk.tar.xz
+          tar -xf sdk.tar.xz -C ~/theos/sdks
           mkdir -p include lib
-          curl -L https://github.com -o dobby.tar.gz || true
           git clone https://github.com /tmp/dobby
           cmake -S /tmp/dobby -B /tmp/dobby/build -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DDOBBY_GENERATE_SHARED=OFF
           cmake --build /tmp/dobby/build --config Release
