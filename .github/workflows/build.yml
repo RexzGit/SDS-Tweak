@@ -4,26 +4,44 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Theos & Dobby
+      - name: Install Dependencies & Theos
         run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot git curl xz-utils cmake ninja-build clang lld
           git clone --recursive https://github.com ~/theos
+          mkdir -p ~/theos/toolchain/linux/iphone
+          curl -L https://github.com -o toolchain.tar.xz
+          tar -xf toolchain.tar.xz -C ~/theos/toolchain/linux/iphone
           mkdir -p ~/theos/sdks
           curl -L https://github.com -o sdk.tar.xz
           tar -xf sdk.tar.xz -C ~/theos/sdks
+
+      - name: Build Dobby for iOS
+        env:
+          THEOS: /home/runner/theos
+        run: |
           mkdir -p include lib
           git clone https://github.com /tmp/dobby
-          cmake -S /tmp/dobby -B /tmp/dobby/build -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DDOBBY_GENERATE_SHARED=OFF
-          cmake --build /tmp/dobby/build --config Release
+          cmake -S /tmp/dobby -B /tmp/dobby/build -G Ninja \
+            -DCMAKE_SYSTEM_NAME=Darwin \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_C_COMPILER=$THEOS/toolchain/linux/iphone/bin/clang \
+            -DCMAKE_CXX_COMPILER=$THEOS/toolchain/linux/iphone/bin/clang++ \
+            -DCMAKE_SYSROOT=$THEOS/sdks/iPhoneOS14.5.sdk \
+            -DCMAKE_C_FLAGS="-target arm64-apple-ios14.0" \
+            -DCMAKE_CXX_FLAGS="-target arm64-apple-ios14.0" \
+            -DDOBBY_GENERATE_SHARED=OFF
+          cmake --build /tmp/dobby/build
           cp /tmp/dobby/include/dobby.h include/
           cp /tmp/dobby/build/libdobby.a lib/
 
       - name: Build Tweak
         env:
-          THEOS: /Users/runner/theos
+          THEOS: /home/runner/theos
         run: |
           make
 
