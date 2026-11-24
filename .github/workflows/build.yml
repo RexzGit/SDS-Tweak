@@ -1,52 +1,25 @@
+yaml
 name: Build Dylib
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies & Theos
+      - name: Compile Dylib
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fakeroot git curl xz-utils cmake ninja-build clang lld
-          git clone --recursive https://github.com ~/theos
-          mkdir -p ~/theos/toolchain/linux/iphone
-          curl -L https://github.com -o toolchain.tar.xz
-          tar -xf toolchain.tar.xz -C ~/theos/toolchain/linux/iphone
-          mkdir -p ~/theos/sdks
-          curl -L https://github.com -o sdk.tar.xz
-          tar -xf sdk.tar.xz -C ~/theos/sdks
-
-      - name: Build Dobby for iOS
-        env:
-          THEOS: /home/runner/theos
-        run: |
-          mkdir -p include lib
-          git clone https://github.com /tmp/dobby
-          cmake -S /tmp/dobby -B /tmp/dobby/build -G Ninja \
-            -DCMAKE_SYSTEM_NAME=Darwin \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_C_COMPILER=$THEOS/toolchain/linux/iphone/bin/clang \
-            -DCMAKE_CXX_COMPILER=$THEOS/toolchain/linux/iphone/bin/clang++ \
-            -DCMAKE_SYSROOT=$THEOS/sdks/iPhoneOS14.5.sdk \
-            -DCMAKE_C_FLAGS="-target arm64-apple-ios14.0" \
-            -DCMAKE_CXX_FLAGS="-target arm64-apple-ios14.0" \
-            -DDOBBY_GENERATE_SHARED=OFF
-          cmake --build /tmp/dobby/build
-          cp /tmp/dobby/include/dobby.h include/
-          cp /tmp/dobby/build/libdobby.a lib/
-
-      - name: Build Tweak
-        env:
-          THEOS: /home/runner/theos
-        run: |
-          make
+          clang++ -dynamiclib -arch arm64 \
+            -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+            -miphoneos-version-min=14.0 \
+            -framework Foundation \
+            -x objective-c++ Tweak.xm \
+            -o SDSTweak.dylib
 
       - name: Upload Dylib
         uses: actions/upload-artifact@v4
         with:
           name: SDSTweak.dylib
-          path: .theos/obj/debug/arm64/SDSTweak.dylib
+          path: SDSTweak.dylib
