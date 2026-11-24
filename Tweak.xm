@@ -1,5 +1,4 @@
-cpp
-#import <Foundation/Foundation.h>
+﻿#import <Foundation/Foundation.h>
 #import <mach-o/dyld.h>
 #import <mach/mach.h>
 #include <cstring>
@@ -30,19 +29,17 @@ static void initialize() {
         uintptr_t slide = getUnitySlide();
         if (slide == 0) return;
 
-        // ARM64 RET instruction (0xD65F03C0) to immediately block ad functions
         const uint32_t retPatch[] = { 0xD65F03C0 };
-        patchBytes(slide + 0x2F74E44, retPatch, 1); // LoadInterstitial
-        patchBytes(slide + 0x2F787A0, retPatch, 1); // InitAd
-        patchBytes(slide + 0x2FF25BC, retPatch, 1); // activateAd
+        patchBytes(slide + 0x2F74E44, retPatch, 1);
+        patchBytes(slide + 0x2F787A0, retPatch, 1);
+        patchBytes(slide + 0x2FF25BC, retPatch, 1);
 
-        // ARM64 patch for SaveParam: MOV W8, #0x423F; MOVK W8, #0x000F, LSL #16 (999999); STR W8, [X0, #0x28]; RET
         const uint32_t coinPatch[] = {
-            0x528847E8, // mov w8, #0x423f
-            0x72A001E8, // movk w8, #0xf, lsl #16 (w8 = 999999)
-            0xB9002808, // str w8, [x0, #0x28] (this->coins = 999999)
-            0xD65F03C0  // ret
+            0x528847E8,
+            0x72A001E8,
+            0xB9002808,
+            0xD65F03C0
         };
-        patchBytes(slide + 0x2FF4668, coinPatch, 4); // SaveParam
+        patchBytes(slide + 0x2FF4668, coinPatch, 4);
     });
 }
