@@ -7,13 +7,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup iOS Compiler
         run: |
-          sudo apt-get update && sudo apt-get install -y clang lld xz-utils curl
-          mkdir -p ~/ios-sdk
-          curl -sL https://github.com | tar -xJ -C ~/ios-sdk
+          sudo apt-get update && sudo apt-get install -y clang lld git
+          git clone --depth 1 https://github.com ~/ios-sdk
       - name: Compile Dylib
         run: |
+          SDK_PATH=$(ls -d ~/ios-sdk/iPhoneOS*.sdk | head -n 1)
           clang++ -target arm64-apple-ios14.0 -fuse-ld=lld -dynamiclib \
-            -isysroot ~/ios-sdk/iPhoneOS14.5.sdk \
+            -isysroot "$SDK_PATH" \
             -framework Foundation \
             -Wl,-undefined,dynamic_lookup \
             -x objective-c++ Tweak.xm \
