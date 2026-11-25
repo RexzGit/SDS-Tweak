@@ -13,7 +13,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang lld
       - name: Compile Dylib
         run: |
-          SDK_PATH=$(ls -d ios-sdk/iPhoneOS*.sdk | head -n 1)
+          SDK_PATH=$(ls -d ios-sdk/iPhoneOS*.sdk | tail -n 1)
           clang++ -target arm64-apple-ios14.0 -fuse-ld=lld -dynamiclib \
             -isysroot "$SDK_PATH" \
             -framework Foundation \
