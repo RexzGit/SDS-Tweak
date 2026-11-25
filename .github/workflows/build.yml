@@ -2,11 +2,22 @@ name: Build Dylib
 on: [push, workflow_dispatch]
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup iOS Compiler
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang lld xz-utils curl
+          mkdir -p ~/ios-sdk
+          curl -sL https://github.com | tar -xJ -C ~/ios-sdk
       - name: Compile Dylib
-        run: clang++ -dynamiclib -arch arm64 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -miphoneos-version-min=14.0 -framework Foundation -x objective-c++ Tweak.xm -o SDSTweak.dylib
+        run: |
+          clang++ -target arm64-apple-ios14.0 -fuse-ld=lld -dynamiclib \
+            -isysroot ~/ios-sdk/iPhoneOS14.5.sdk \
+            -framework Foundation \
+            -Wl,-undefined,dynamic_lookup \
+            -x objective-c++ Tweak.xm \
+            -o SDSTweak.dylib
       - name: Upload Dylib
         uses: actions/upload-artifact@v4
         with:
