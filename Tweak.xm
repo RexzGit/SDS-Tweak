@@ -1,8 +1,8 @@
-﻿#import <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 #import <mach-o/dyld.h>
 #import <mach/mach.h>
-#include <cstring>
-#include <cstdint>
+#include <string.h>
+#include <stdint.h>
 
 extern "C" kern_return_t mach_vm_protect(vm_map_t, mach_vm_address_t, mach_vm_size_t, boolean_t, vm_prot_t);
 
