@@ -5,13 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: theos/sdks
+          path: ios-sdk
       - name: Setup iOS Compiler
-        run: |
-          sudo apt-get update && sudo apt-get install -y clang lld git
-          git clone --depth 1 https://github.com ~/ios-sdk
+        run: sudo apt-get update && sudo apt-get install -y clang lld
       - name: Compile Dylib
         run: |
-          SDK_PATH=$(ls -d ~/ios-sdk/iPhoneOS*.sdk | head -n 1)
+          SDK_PATH=$(ls -d ios-sdk/iPhoneOS*.sdk | head -n 1)
           clang++ -target arm64-apple-ios14.0 -fuse-ld=lld -dynamiclib \
             -isysroot "$SDK_PATH" \
             -framework Foundation \
